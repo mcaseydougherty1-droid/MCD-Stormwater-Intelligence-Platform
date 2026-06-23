@@ -1,42 +1,72 @@
+"""
+ArcGIS REST Client
+
+Provides a reusable client for querying ArcGIS Feature Services.
+
+Author: MCD Stormwater Intelligence Platform
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
 import requests
-
-
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 class ArcGISClient:
-    def __init__(self, layer_url: str, page_size: int = 2000):
-        self.layer_url = layer_url.rstrip("/")
-        self.page_size = page_size
+    """
+    Reusable ArcGIS Feature Service client.
+    """
 
-    def get_record_count(self, where: str = "1=1") -> int:
-        params = {
-            "where": where,
-            "returnCountOnly": "true",
-            "f": "json",
-        }
-        response = requests.get(f"{self.layer_url}/query", params=params, timeout=60)
+    def __init__(self, base_url: str, timeout: int = 60):
+        self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
+
+        self.session = requests.Session()
+
+        retry_strategy = Retry(
+            total=5,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["GET", "POST"],
+        )
+
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
+    
+    def get(self, endpoint: str, params: dict[str, Any]) -> dict:
+        """
+        Execute a GET request against an ArcGIS REST endpoint.
+        """
+
+        url = f"{self.base_url}/{endpoint.lstrip('/')}"
+
+        response = self.session.get(
+            url,
+            params=params,
+            timeout=self.timeout,
+        )
+
         response.raise_for_status()
-        return response.json()["count"]
 
-    def fetch_features(self, where: str = "1=1", out_fields: str = "*") -> list[dict]:
-        total = self.get_record_count(where)
-        features = []
+        return response.json()
 
-        for offset in range(0, total, self.page_size):
-            params = {
-                "where": where,
-                "outFields": out_fields,
-                "returnGeometry": "true",
-                "f": "json",
-                "resultOffset": offset,
-                "resultRecordCount": self.page_size,
-            }
+    def post(self, endpoint: str, data: dict[str, Any]) -> dict:
+        """
+        Execute a POST request against an ArcGIS REST endpoint.
+        """
 
-            response = requests.get(f"{self.layer_url}/query", params=params, timeout=120)
-            response.raise_for_status()
+        url = f"{self.base_url}/{endpoint.lstrip('/')}"
 
-            data = response.json()
-            batch = data.get("features", [])
-            features.extend(batch)
+        response = self.session.post(
+            url,
+            data=data,
+            timeout=self.timeout,
+        )
 
-            print(f"Downloaded {len(features)} of {total} records")
+        response.raise_for_status()
 
-        return features
+        return response.json()
+      
