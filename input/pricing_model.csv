@@ -1,0 +1,5 @@
+Service,Base_Price,Unit,Notes
+Stormwater inspection,750,per facility,Initial inspection and condition report
+Vegetation management,1500,per acre,Annual basin vegetation maintenance estimate
+Outlet structure cleaning,500,per structure,Visual cleanout and debris removal estimate
+Proposal preparation,0,per prospect,Generated from ranked pipeline
