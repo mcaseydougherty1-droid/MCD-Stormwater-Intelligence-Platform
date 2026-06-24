@@ -18,6 +18,10 @@ output/
 exports/
 logs/
 
+# Generated platform data
+data/
+database/
+
 # Windows
 Thumbs.db
 Desktop.ini
