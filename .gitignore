@@ -24,3 +24,6 @@ Desktop.ini
 
 # SQLite
 *.db
+*.egg-info/
+.pytest_cache/
+__pycache__/
