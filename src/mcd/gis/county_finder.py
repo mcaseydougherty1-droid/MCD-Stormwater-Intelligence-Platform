@@ -1,17 +1,13 @@
-from .classifier import LayerClassifier, LayerCategory
-from .discovery import ArcGISDiscovery
+from mcd.gis.classifier import LayerCategory, LayerClassifier
+from mcd.gis.discovery import ArcGISDiscovery
 
 
 class CountyLayerFinder:
-    """
-    Finds stormwater-related GIS layers for a county.
-    """
-
     def __init__(self, server_url: str):
         self.discovery = ArcGISDiscovery(server_url)
 
-    def find_stormwater_layers(self):
-        results = []
+    def find_relevant_layers(self) -> list[dict[str, str]]:
+        results: list[dict[str, str]] = []
 
         services = self.discovery.list_services()
 
@@ -25,6 +21,8 @@ class CountyLayerFinder:
                     results.append(
                         {
                             "category": category.value,
+                            "service": service.name,
+                            "service_type": service.type,
                             "layer": layer.name,
                             "url": layer.url,
                         }
